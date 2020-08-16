@@ -21,7 +21,7 @@ def cli():
 @click.option('--lr', default=hparams['lr'])
 @click.option('--name', default=hparams['name'])
 def train(topk, gpu, epochs, **kwargs):
-    print(kwargs)
+    # print(kwargs)
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu)
     click.echo(f'Now GPU: {torch.cuda.get_device_name(0)}')
 
@@ -32,9 +32,9 @@ def train(topk, gpu, epochs, **kwargs):
                       logger=TensorBoardLogger(save_dir=os.getcwd(),
                                                name=os.path.join('lightning_logs', hparams['name'])),
                       checkpoint_callback=ModelCheckpoint(None,
-                                                          monitor='val_loss',
+                                                          monitor='mrr',
                                                           save_top_k=topk),
-                      early_stop_callback=EarlyStopping('val_loss', 0.1),
+                      early_stop_callback=EarlyStopping('rocauc', 0.1),
                       )
     trainer.fit(model)
 
