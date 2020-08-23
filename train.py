@@ -39,8 +39,8 @@ class Lightning(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         click, cand, label = batch
         _, label = label.max(-1)
-        loss, _ = self.nrms(click, cand, label)
-        return {'loss': loss}
+        loss, ae_loss, _ = self.nrms(click, cand, label)
+        return {'loss': loss + 0.5 * ae_loss, 'progress_bar': {'ce_loss': loss.item(), 'ae_loss': ae_loss.item()}}
     
     def training_epoch_end(self, outputs):
         loss = torch.stack([o['loss'] for o in outputs])

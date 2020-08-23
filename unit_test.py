@@ -28,3 +28,11 @@ def model():
     cand = torch.randint(0, 100, (64, 4, 10))
     nrms(clicked, cand)
 model()
+
+def autoencoer():
+    from model.autoencoder import AutoEncoder
+    m = AutoEncoder(100, 13)
+    x = torch.rand(8, 100)
+    print(m(x)[1])
+
+# autoencoer()

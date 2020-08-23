@@ -14,6 +14,7 @@ class NRMS(nn.Module):
                                       hparams['doc_encoder_size'],
                                       hparams['doc_v_size'],
                                       hparams['dropout'],
+                                      hparams['doc_asp_cnt'],
                                       pretrained)
         
         if hparams['user_encoder'] == 'gru':
@@ -40,8 +41,8 @@ class NRMS(nn.Module):
 
         clicks = clicks.reshape(-1, seq_len)
         cands = cands.reshape(-1, seq_len)
-        click_embed = self.doc_encoder(clicks)
-        cand_embed = self.doc_encoder(cands)
+        click_embed, loss1 = self.doc_encoder(clicks)
+        cand_embed, loss2 = self.doc_encoder(cands)
         click_embed = click_embed.reshape(num_user, num_click_docs, -1)
         cand_embed = cand_embed.reshape(num_user, num_cand_docs, -1)
         click_embed = click_embed.permute(1, 0, 2)
@@ -57,5 +58,5 @@ class NRMS(nn.Module):
             0, 2, 1)).squeeze(1)  # [B, 1, hid], [B, 10, hid]
         if labels is not None:
             loss = self.criterion(logits, labels)
-            return loss, logits
+            return loss, loss1, logits
         return torch.sigmoid(logits)
