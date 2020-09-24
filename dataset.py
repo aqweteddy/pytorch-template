@@ -45,7 +45,7 @@ class TrainDataset(data.Dataset):
                 clicked = histories[:self.click_sample]
                 # clicked = random.sample(histories, self.click_sample)
             else:
-                clicked = histories + ['0'] * (self.click_sample - len(histories))
+                clicked = ['0'] * (self.click_sample - len(histories)) + histories
             for pos in pos_list:
                 try:
                     sample = random.sample(neg_list, self.neg_sample)

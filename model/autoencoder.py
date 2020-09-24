@@ -15,15 +15,14 @@ class AutoEncoder(nn.Module):
         self.z_n = None
         nn.init.kaiming_uniform_(self.aspect_embed.weight)
     
-    def forward(self, x):
+    def forward(self, x, loss_fl=True):
         """x
         x: tensor: [B, S, E]
         """
         x = self.attention(x)
-        # x = F.normalize(x, dim=-1)
         composition = self.reduction(x) # [B, asp_cnt]
         reconstructed = torch.matmul(composition, self.aspect_embed.weight) # [B, embed_size] = [B, asp_cnt] * [asp_cnt, embed_size]
-        if not self.training: # eval
+        if not self.training or not loss_fl: # eval, no loss
             return x, reconstructed, 0.
         return x, reconstructed, self.get_loss(F.normalize(reconstructed), x)
         

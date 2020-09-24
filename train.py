@@ -31,16 +31,17 @@ class Lightning(pl.LightningModule):
         return optimizer
 
     def train_dataloader(self) ->data.DataLoader:
-        return data.DataLoader(self.train_ds, batch_size=self.hparams['batch_size'], shuffle=True, num_workers=5)
+        return data.DataLoader(self.train_ds, batch_size=self.hparams['batch_size'], shuffle=True, num_workers=8)
     
     def val_dataloader(self):
-        return data.DataLoader(self.val_ds, batch_size=100, num_workers=10)
+        return data.DataLoader(self.val_ds, batch_size=100, num_workers=8)
     
     def training_step(self, batch, batch_idx):
         click, cand, label = batch
         _, label = label.max(-1)
         loss, ae_loss, _ = self.nrms(click, cand, label)
-        return {'loss': loss + 0.5 * ae_loss, 'progress_bar': {'ce_loss': loss.item(), 'ae_loss': ae_loss.item()}}
+        log =  {'ce_loss': loss.item(), 'ae_loss': ae_loss.item()}
+        return {'loss': loss + self.hparams['alpha'] * ae_loss, 'progress_bar': log}
     
     def training_epoch_end(self, outputs):
         loss = torch.stack([o['loss'] for o in outputs])
