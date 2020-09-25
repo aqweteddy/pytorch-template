@@ -3,9 +3,9 @@ hparams = {
     'batch_size': 64,
     'lr': 0.001,
     'name': 'exp4_alpha',
-    'description': 'alpha: 0.6',
+    'description': 'alpha: 1.',
     'pretrained': 'data/w2v/news_200d.bin',
-    'alpha': 0.6,
+    'alpha': 1.,
     'model': {
         'user_encoder': 'gru',
         'doc_nhead': 10,
