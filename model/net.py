@@ -64,7 +64,8 @@ class NRMS(nn.Module):
         clicks = clicks.reshape(-1, seq_len)
         cands = cands.reshape(-1, seq_len)
         click_embed, loss1 = self.doc_encoder(clicks)
-        cand_embed, loss2 = self.doc_encoder(cands, loss_fl=False)
+        with torch.no_grad():
+            cand_embed, loss2 = self.doc_encoder(cands, loss_fl=False)
         click_embed = click_embed.reshape(num_user, num_click_docs, -1)
         cand_embed = cand_embed.reshape(num_user, num_cand_docs, -1)
         if self.hparams['user_encoder'] == 'mha':

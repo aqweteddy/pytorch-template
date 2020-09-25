@@ -1,8 +1,9 @@
 import torch
 from torch import nn
+from torch.jit import freeze
 import torch.nn.functional as F
 from model.attn import AdditiveAttention
-import random
+
 
 class AutoEncoder(nn.Module):
     def __init__(self, embed_size, asp_cnt, v_size) -> None:
