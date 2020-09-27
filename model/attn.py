@@ -29,7 +29,6 @@ class AspectAttention(nn.Module):
         self.wv = nn.Linear(in_size, v_size)
         self.V = nn.Sequential(nn.Tanh(), nn.Linear(v_size, 1, bias=False))
 
-    
     def forward(self, query: torch.Tensor, value: torch.Tensor):
         """foward
 
@@ -42,3 +41,17 @@ class AspectAttention(nn.Module):
         score = torch.softmax(self.V(w).squeeze(-1), dim=-1) # [B, S]
         return torch.bmm(score.unsqueeze(1), value).squeeze(1), score
     
+
+class LuongAttention(nn.Module):
+    def __init__(self, inp_size) -> None:
+        super(LuongAttention, self).__init__()
+        self.W = nn.Linear(inp_size, inp_size, bias=False)
+    
+    def forward(self, query, value):
+        """
+        query: (B, H)
+        value: (B, S, H)
+        """
+        score = torch.bmm(self.W(query.unsqueeze(1)), value.transpose(2, 1))
+        score = torch.softmax(score, -1)
+        return torch.bmm(score, value).squeeze(1), score.squeeze(1)

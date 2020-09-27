@@ -8,6 +8,8 @@ import torch
 from dataset import TrainDataset, TestDataset
 
 from sklearn.metrics import roc_auc_score
+from sklearn.cluster import MiniBatchKMeans
+
 from metrics import ndcg_score, mrr_score
 
 class Lightning(pl.LightningModule):
@@ -15,7 +17,9 @@ class Lightning(pl.LightningModule):
         super(Lightning, self).__init__()
         self.hparams = hparams
         self.w2v = Word2Vec.load(hparams['pretrained'])
-        self.nrms = NRMS(hparams['model'], pretrained=torch.tensor(self.w2v.wv.vectors))
+        self.nrms = NRMS(hparams['model'], 
+                        pretrained=torch.tensor(self.w2v.wv.vectors),
+                        aspects_embed=torch.tensor(self.init_aspects_embedding(self.w2v)))
 
     def forward(self):
         pass
@@ -31,7 +35,7 @@ class Lightning(pl.LightningModule):
         return optimizer
 
     def train_dataloader(self) ->data.DataLoader:
-        return data.DataLoader(self.train_ds, batch_size=self.hparams['batch_size'], shuffle=True, num_workers=8)
+        return data.DataLoader(self.train_ds, batch_size=self.hparams['batch_size'], shuffle=True, num_workers=10)
     
     def val_dataloader(self):
         return data.DataLoader(self.val_ds, batch_size=100, num_workers=8)
@@ -75,3 +79,20 @@ class Lightning(pl.LightningModule):
         log = {'ndcg5': torch.tensor(ndcg5), 'ndcg10': torch.tensor(ndcg10), 'mrr': torch.tensor(mrr), 'rocauc': torch.tensor(rocauc)}
         print()
         return {'progress_bar': log, 'log': log}
+    
+    def init_aspects_embedding(self, w2v):
+        km = MiniBatchKMeans(n_clusters=self.hparams['model']['doc_asp_cnt'], verbose=0, n_init=100)
+        m = []
+        for k in w2v.wv.vocab.keys():
+            m.append(w2v.wv[k])
+
+        m = np.matrix(m)
+
+        km.fit(m)
+        clusters = km.cluster_centers_
+
+        # L2 normalization
+        norm_aspect_matrix = clusters / \
+            np.linalg.norm(clusters, axis=-1, keepdims=True)
+
+        return norm_aspect_matrix

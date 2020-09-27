@@ -91,9 +91,9 @@ class TestDataset(TrainDataset):
                 continue
             # gen candidate
             impressions = [im.split('-') for im in impressions.strip().split(' ')]
-            # if len(histories) > self.click_sample:
+            if len(histories) < self.click_sample:
+                histories = ['0'] * (self.click_sample - len(histories)) + histories
             histories = histories[:self.click_sample]
-            histories += ['0'] * (self.click_sample - len(histories))
             
             impressions = [(news_id, int(fl)) for news_id, fl in impressions]
             while len(impressions) % 50 != 0:

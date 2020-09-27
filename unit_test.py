@@ -13,21 +13,21 @@ def ds():
     w2id = {key: w2v.wv.vocab[key].index for key in w2v.wv.vocab}
 
     # ds = TrainDataset('./data/small_train/news.tsv', './data/small_train/behaviors.tsv', w2id, 4, 50)
-    ds = TestDataset('./data/dev/news.tsv', './data/dev/behaviors.tsv', w2id, 4, 50)
+    ds = TestDataset('./data/small_dev/news.tsv', './data/small_dev/behaviors.tsv', w2id, 4, 50)
     loader = data.DataLoader(ds, batch_size=32, num_workers=10)
     print(len(ds))
     print(ds[1])
     for d in tqdm(loader):
         pass
     print(ds[1])
-    
+ds()
 
 def model():
     nrms = NRMS(hparams['model'])
     clicked = torch.randint(0, 100, (64, 50, 10))
     cand = torch.randint(0, 100, (64, 4, 10))
     nrms(clicked, cand)
-model()
+# model()
 
 def autoencoer():
     from model.autoencoder import AutoEncoder

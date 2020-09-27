@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from model.attn import AdditiveAttention, AspectAttention
+from model.attn import AdditiveAttention, AspectAttention, LuongAttention
 from model.autoencoder import AutoEncoder
 
 
 class DocEncoder(nn.Module):
-    def __init__(self, embed_size, num_heads, output_size, v_size, dropout, asp_cnt, is_concat, pretrained=None):
+    def __init__(self, embed_size, num_heads, output_size, v_size, dropout, asp_cnt, is_concat, pretrained=None, aspects_embed=None):
         super(DocEncoder, self).__init__()
         if pretrained is None:
             print('testing')
@@ -16,12 +16,14 @@ class DocEncoder(nn.Module):
 
         self.mha = nn.MultiheadAttention(embed_size, num_heads, dropout=dropout)
         self.drop = nn.Dropout(dropout)
-        self.autoencoder = AutoEncoder(embed_size, asp_cnt=asp_cnt, v_size=v_size)
+        self.autoencoder = AutoEncoder(embed_size, asp_cnt=asp_cnt, v_size=v_size, aspects_embed=aspects_embed)
         self.is_concat = is_concat
         if is_concat:
-            self.attn2 = AdditiveAttention(embed_size, v_size)
+            # self.attn2 = AdditiveAttention(embed_size, v_size)
+            self.attn2 = LuongAttention(embed_size)
         else:
-            self.attn2 = AspectAttention(embed_size, v_size)
+            # self.attn2 = AspectAttention(embed_size, v_size)
+            self.attn2 = LuongAttention(embed_size)
         # self.proj = nn.Linear(embed_size, output_size)
 
     def forward(self, x, loss_fl=True):
@@ -36,7 +38,8 @@ class DocEncoder(nn.Module):
             outputs, score = self.attn2(latent_asp, outputs_1)
             return outputs, score, loss
         else:
-            outputs, score = self.attn2(outputs_1)
+            # outputs, score = self.attn2(outputs_1)
+            outputs, score = self.attn2(outputs_1.mean(1), outputs_1)
             return torch.cat([outputs, latent_asp], dim=-1), score, loss
 
     def get_ae_aspects(self):

@@ -2,25 +2,27 @@ import torch
 from torch import nn
 from torch.jit import freeze
 import torch.nn.functional as F
-from model.attn import AdditiveAttention
+from model.attn import AdditiveAttention, LuongAttention
 
 
 class AutoEncoder(nn.Module):
-    def __init__(self, embed_size, asp_cnt, v_size) -> None:
+    def __init__(self, embed_size, asp_cnt, v_size, aspects_embed=None) -> None:
         super(AutoEncoder, self).__init__()
         self.embed_size = embed_size
-        self.attention = AdditiveAttention(embed_size, v_size)
-
-        self.aspect_embed = nn.Embedding(asp_cnt, embed_size)
+        # self.attention = AdditiveAttention(embed_size, v_size)
+        self.attention = LuongAttention(embed_size)
         self.reduction = nn.Sequential(nn.Linear(embed_size, asp_cnt), nn.Softmax(-1))
-        self.z_n = None
-        nn.init.kaiming_uniform_(self.aspect_embed.weight)
+        if aspects_embed is None:
+            self.aspect_embed = nn.Embedding(asp_cnt, embed_size)
+            nn.init.kaiming_uniform_(self.aspect_embed.weight)
+        else:
+            self.aspect_embed = nn.Embedding.from_pretrained(aspects_embed, freeze=False)
     
     def forward(self, x, loss_fl=True):
         """x
         x: tensor: [B, S, E]
         """
-        x, _ = self.attention(x)
+        x, _ = self.attention(x.mean(1), x)
         composition = self.reduction(x) # [B, asp_cnt]
         reconstructed = torch.matmul(composition, self.aspect_embed.weight) # [B, embed_size] = [B, asp_cnt] * [asp_cnt, embed_size]
         if not self.training or not loss_fl: # eval, no loss
