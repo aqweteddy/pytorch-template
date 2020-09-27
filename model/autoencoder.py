@@ -20,7 +20,7 @@ class AutoEncoder(nn.Module):
         """x
         x: tensor: [B, S, E]
         """
-        x = self.attention(x)
+        x, _ = self.attention(x)
         composition = self.reduction(x) # [B, asp_cnt]
         reconstructed = torch.matmul(composition, self.aspect_embed.weight) # [B, embed_size] = [B, asp_cnt] * [asp_cnt, embed_size]
         if not self.training or not loss_fl: # eval, no loss

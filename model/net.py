@@ -9,6 +9,8 @@ from model.autoencoder import AutoEncoder
 class NRMS(nn.Module):
     def __init__(self, hparams, pretrained=None):
         super(NRMS, self).__init__()
+        if 'is_concat' not in hparams.keys():
+            hparams['is_concat'] = False
         self.hparams = hparams
         self.doc_encoder = DocEncoder(hparams['embed_size'],
                                       hparams['doc_nhead'],
@@ -16,8 +18,10 @@ class NRMS(nn.Module):
                                       hparams['doc_v_size'],
                                       hparams['dropout'],
                                       hparams['doc_asp_cnt'],
+                                      hparams['is_concat'],
                                       pretrained)
-
+        if hparams['is_concat']:
+            hparams['doc_encoder_size'] *= 2
         if hparams['user_encoder'] == 'gru':
             self.user_encoder = nn.GRU(
                 hparams['doc_encoder_size'], hparams['doc_encoder_size'], num_layers=hparams['gru_num_layers'])
@@ -63,9 +67,8 @@ class NRMS(nn.Module):
 
         clicks = clicks.reshape(-1, seq_len)
         cands = cands.reshape(-1, seq_len)
-        click_embed, loss1 = self.doc_encoder(clicks)
-        with torch.no_grad():
-            cand_embed, loss2 = self.doc_encoder(cands, loss_fl=False)
+        click_embed, score, loss1 = self.doc_encoder(clicks)
+        cand_embed, score, loss2 = self.doc_encoder(cands, loss_fl=False)
         click_embed = click_embed.reshape(num_user, num_click_docs, -1)
         cand_embed = cand_embed.reshape(num_user, num_cand_docs, -1)
         if self.hparams['user_encoder'] == 'mha':
@@ -73,26 +76,26 @@ class NRMS(nn.Module):
             click_output, _ = self.user_encoder(
                 click_embed, click_embed, click_embed)
             click_output = self.drop(click_output.permute(1, 0, 2))
-            click_repr = self.attn(click_output)
+            click_repr, _ = self.attn(click_output)
         elif self.hparams['user_encoder'] == 'gru':
             click_embed = click_embed.permute(1, 0, 2)
             click_output, _ = self.user_encoder(click_embed)
             click_output = self.drop(click_output.permute(1, 0, 2))
-            click_repr = self.attn(click_output)
+            click_repr, _ = self.attn(click_output)
         elif self.hparams['user_encoder'] == 'ae_gru':
             click_embed = click_embed.permute(1, 0, 2)
             click_embed = self.drop(click_embed)
             click_output, _ = self.bridge(click_embed)
             click_output = click_output.permute(1, 0, 2)
             _, topic, loss3 = self.user_encoder(click_embed.permute(1, 0, 2))
-            click_repr = self.attn(topic, click_output)
+            click_repr, _ = self.attn(topic, click_output)
         elif self.hparams['user_encoder'] == 'ae_mha':
             click_embed = click_embed.permute(1, 0, 2)
             click_embed = self.drop(click_embed)
             click_output, _ = self.bridge(click_embed, click_embed, click_embed)
             click_output = click_output.permute(1, 0, 2)
             _, topic, loss3 = self.user_encoder(click_embed.permute(1, 0, 2))
-            click_repr = self.attn(topic, click_output)
+            click_repr, _ = self.attn(topic, click_output)
 
 
         logits = torch.bmm(click_repr.unsqueeze(1), cand_embed.permute(

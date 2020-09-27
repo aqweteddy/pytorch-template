@@ -19,7 +19,8 @@ class AdditiveAttention(nn.Module):
             x (tensor): B, S, H
         """
         score = torch.softmax(self.proj(x).squeeze(-1), dim=-1)  # B, S
-        return torch.bmm(score.unsqueeze(1), x).squeeze(1)
+        return torch.bmm(score.unsqueeze(1), x).squeeze(1), score
+
 
 class AspectAttention(nn.Module):
     def __init__(self, in_size, v_size) -> None:
@@ -39,4 +40,5 @@ class AspectAttention(nn.Module):
         query = query.unsqueeze(1).repeat(1, value.size(1), 1) # [B, S, in_size]
         w = self.wq(query) + self.wv(value) # [B, S, v_size]
         score = torch.softmax(self.V(w).squeeze(-1), dim=-1) # [B, S]
-        return torch.bmm(score.unsqueeze(1), value).squeeze(1)
+        return torch.bmm(score.unsqueeze(1), value).squeeze(1), score
+    
