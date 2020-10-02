@@ -22,20 +22,20 @@ class NRMS(nn.Module):
                                       pretrained,
                                       aspects_embed
                                       )
-        # if hparams['is_concat']:
-        #     hparams['doc_encoder_size'] *= 2
         if hparams['user_encoder'] == 'gru':
             self.user_encoder = nn.GRU(
                 hparams['doc_encoder_size'], hparams['doc_encoder_size'], num_layers=hparams['gru_num_layers'])
-            # self.attn = AdditiveAttention(
-                # hparams['doc_encoder_size'], hparams['click_v_size'])
-            self.attn = LuongAttention(hparams['doc_encoder_size'])
+            self.attn = AdditiveAttention(
+                hparams['doc_encoder_size'], hparams['click_v_size'])
+            # self.attn = LuongAttention(hparams['doc_encoder_size'])
         elif hparams['user_encoder'] == 'mha':
             self.user_encoder = nn.MultiheadAttention(
                 hparams['doc_encoder_size'], hparams['user_nhead'], dropout=hparams['dropout'])
-            # self.attn = AdditiveAttention(
-            #     hparams['doc_encoder_size'], hparams['click_v_size'])
-            self.attn = LuongAttention(hparams['doc_encoder_size'])
+            self.attn = AdditiveAttention(
+                hparams['doc_encoder_size'], hparams['click_v_size'])
+            # self.attn = LuongAttention(hparams['doc_encoder_size'])
+        elif self.hparams['user_encoder'] == 'attn':
+            self.attn = AdditiveAttention(hparams['doc_encoder_size'], hparams['click_v_size'])
         else:
             raise ValueError("user encoder error")
             
@@ -68,12 +68,17 @@ class NRMS(nn.Module):
                 click_embed, click_embed, click_embed)
             click_output = self.drop(click_output.permute(1, 0, 2))
             click_repr, _ = self.attn(click_output)
+            #click_repr, _ = self.attn(click_output.mean(1), click_output)
+
         elif self.hparams['user_encoder'] == 'gru':
             click_embed = click_embed.permute(1, 0, 2)
-            click_output, _ = self.user_encoder(click_embed)
-            click_output = self.drop(click_output.permute(1, 0, 2))
+            click_output, click_repr = self.user_encoder(click_embed)
+            click_repr = click_repr.squeeze(0)
+        elif self.hparams['user_encoder'] == 'attn':
+            click_repr, _ = self.attn(click_embed)
+            # click_output = self.drop(cli.permute(1, 0, 2))
             # click_repr, _ = self.attn(click_output)
-            click_repr, _ = self.attn(click_output.mean(1), click_output)
+            # click_repr, _ = self.attn(click_output.mean(1), click_output)
 
 
 

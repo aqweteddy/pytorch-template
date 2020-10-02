@@ -20,14 +20,14 @@ def ds():
     for d in tqdm(loader):
         pass
     print(ds[1])
-ds()
+# ds()
 
 def model():
     nrms = NRMS(hparams['model'])
     clicked = torch.randint(0, 100, (64, 50, 10))
     cand = torch.randint(0, 100, (64, 4, 10))
     nrms(clicked, cand)
-# model()
+model()
 
 def autoencoer():
     from model.autoencoder import AutoEncoder

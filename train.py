@@ -35,10 +35,10 @@ class Lightning(pl.LightningModule):
         return optimizer
 
     def train_dataloader(self) ->data.DataLoader:
-        return data.DataLoader(self.train_ds, batch_size=self.hparams['batch_size'], shuffle=True, num_workers=10)
+        return data.DataLoader(self.train_ds, batch_size=self.hparams['batch_size'], shuffle=True, num_workers=5)
     
     def val_dataloader(self):
-        return data.DataLoader(self.val_ds, batch_size=100, num_workers=8)
+        return data.DataLoader(self.val_ds, batch_size=100, num_workers=5)
     
     def training_step(self, batch, batch_idx):
         click, cand, label = batch

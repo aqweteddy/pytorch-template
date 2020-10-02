@@ -29,6 +29,7 @@ def train(topk, gpu, epochs, **kwargs):
     model = Lightning(hparams)
     trainer = Trainer(gpus=1,
                       max_epochs=epochs,
+                      weights_summary='full',
                       logger=TensorBoardLogger(save_dir=os.getcwd(),
                                                name=os.path.join('lightning_logs', hparams['name'])),
                       checkpoint_callback=ModelCheckpoint(None,

@@ -22,8 +22,8 @@ class DocEncoder(nn.Module):
             # self.attn2 = AdditiveAttention(embed_size, v_size)
             self.attn2 = LuongAttention(embed_size)
         else:
-            # self.attn2 = AspectAttention(embed_size, v_size)
-            self.attn2 = LuongAttention(embed_size)
+            self.attn2 = AspectAttention(embed_size, v_size)
+            # self.attn2 = LuongAttention(embed_size)
         # self.proj = nn.Linear(embed_size, output_size)
 
     def forward(self, x, loss_fl=True):
